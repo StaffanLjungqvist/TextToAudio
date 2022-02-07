@@ -1,6 +1,11 @@
 package se.agara.texttoaudio
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.media.MediaPlayer
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.speech.tts.TextToSpeech
@@ -10,13 +15,22 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import java.io.*
 import java.util.*
 
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
+    private var mAudioFilename = ""
+    private val mUtteranceID = "totts"
     private var tts: TextToSpeech? = null
+    private val EXTERNAL_STORAGE_PERMISSION_CODE = 23
+    lateinit var etText : EditText
+    lateinit var tvInputText : TextView
+    private var mMediaPlayer = MediaPlayer()
+    lateinit var testFile : File
+    var path = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,141 +39,100 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         tts = TextToSpeech(this, this)
 
+        path = this.filesDir.toString() + "/myreq.wav"
+
+        testFile = File(path)
+
+        Log.d("TTS", "skapade fil ${testFile.name}")
+
         val btnSpeak = findViewById<Button>(R.id.btnSpeak)
-        val edText = findViewById<EditText>(R.id.etText)
-        val btnWrite = findViewById<Button>(R.id.btnWrite)
-        val btnRead = findViewById<Button>(R.id.btnRead)
-        val tvInputText = findViewById<TextView>(R.id.tvInputText)
-        val btnWriteAudio = findViewById<Button>(R.id.btnWriteAudio)
+        etText = findViewById<EditText>(R.id.etText)
         val btnReadAudio = findViewById<Button>(R.id.btnReaduAudio)
+        val btnWriteToAudioFile = findViewById<Button>(R.id.btnWriteToAudioFIle)
+
+        ActivityCompat.requestPermissions(
+            this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+            EXTERNAL_STORAGE_PERMISSION_CODE
+        )
 
 
-        val outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recording.3gp";
-        Log.e("TTS", "file location : ${outputFile}")
-        btnWriteAudio.setOnClickListener {
-       //     writeAudioToFile(edText.text.toString())
+        btnWriteToAudioFile.setOnClickListener{
+            saveToAudioFile()
         }
 
-        btnWrite.setOnClickListener {
-
-            if (edText.text.isEmpty()) {
-                Toast.makeText(this, "Enter a text to speak", Toast.LENGTH_LONG).show()
-            } else {
-                writeToFile("testFile.txt", edText.text.toString())
-            }
-
+        btnReadAudio.setOnClickListener {
+            readAudioFile()
         }
-
-        btnRead.setOnClickListener {
-            val readText = readFromFile(this)
-            tvInputText.text = readText
-        }
-
 
 
         btnSpeak.setOnClickListener {
-
-            if (edText.text.isEmpty()) {
+            if (etText.text.isEmpty()) {
                 Toast.makeText(this, "Enter a text to speak", Toast.LENGTH_LONG).show()
             } else {
-                speakOut(edText.text.toString())
+                speakOut(etText.text.toString())
             }
-
         }
     }
 
-    private fun writeAudioToFile(text: String) {
 
 
+    private fun createAudioFile() {
+        // Create audio file location
+        val sddir = File(Environment.getExternalStorageDirectory().toString() + "/My File/")
+        sddir.mkdir()
+        mAudioFilename = sddir.absolutePath.toString() + "/" + mUtteranceID + ".wav"
+        val testFile = File(path)
+        Log.d("TTS", "skapade fil : ${mAudioFilename}")
+    }
 
-        val myHashRender: HashMap<String, String> = HashMap()
-        val ttsText = text
-        val destFileName = "/sdcard/myAppCache/wakeUp.wav"
+    private fun saveToAudioFile() {
 
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            tts!!.synthesizeToFile(etText.text, null, testFile, mUtteranceID)
+            Log.d("TTS", "Saved to " + testFile.absolutePath)
+
+        } else {
+            val hm = HashMap<String, String>()
+            hm.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,mUtteranceID)
+            tts!!.synthesizeToFile("testing", hm, mAudioFilename)
+            Log.d("TTS","Saved to " + mAudioFilename)
+        }
+    }
+
+    private fun readAudioFile() {
         try {
-            myHashRender[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = ttsText
-            tts!!.synthesizeToFile(ttsText, myHashRender, destFileName)
-            Log.e("TTS", "Succesfully wrote to file")
-        } catch (e : Exception) {
-            Log.e("TTS", "Någonting gick fel : ${e}")
-        }
-
-    }
-
-
-    private fun writeToFile(filename: String, fileText: String) {
-
-        try {
-            var filePath = applicationContext.filesDir
-            var writer = FileOutputStream(File(filePath, filename))
-
-            //Sparas under /data/data/app.id/
-            writer.write(fileText.toByteArray())
-            writer.close()
-            Toast.makeText(this, "Succesfully wrote to file ${filename}", Toast.LENGTH_LONG)
-            Log.e("TTS", "Succesfully wrote to file ${filename}")
-        } catch (e: Exception) {
-
-            Log.e("TTS", "Det gick ej att skriva till fil")
-
+            val mp = MediaPlayer.create(this, Uri.parse(path))
+            mp.start()
+        } catch (e : java.lang.Exception) {
+            Log.d("TTS", "Something went wrong : ${e}")
         }
     }
 
 
-    private fun readFromFile(context: Context): String? {
-        var ret = ""
-        try {
-            val inputStream: InputStream = context.openFileInput("testFile.txt")
-            if (inputStream != null) {
-                val inputStreamReader = InputStreamReader(inputStream)
-                val bufferedReader = BufferedReader(inputStreamReader)
-                var receiveString: String? = ""
-                val stringBuilder = StringBuilder()
-                while (bufferedReader.readLine().also { receiveString = it } != null) {
-                    stringBuilder.append("\n").append(receiveString)
-                }
-                inputStream.close()
-                ret = stringBuilder.toString()
-            }
-        } catch (e: FileNotFoundException) {
-            Log.e("login activity", "File not found: " + e.toString())
-        } catch (e: IOException) {
-            Log.e("login activity", "Can not read file: " + e.toString())
-        }
-        return ret
-    }
+
 
 
     override fun onInit(status: Int) {
-
         if (status == TextToSpeech.SUCCESS) {
-
             val result = tts!!.setLanguage(Locale.US)
-
             if (result == TextToSpeech.LANG_MISSING_DATA) {
                 Log.e("TTS", "The language specified is not supported")
             }
-
         } else {
             Log.e("TTS", "TTS Initialization Failed")
         }
-
     }
 
     public override fun onDestroy() {
-
         if (tts != null) {
             tts!!.stop()
             tts!!.shutdown()
         }
-
         super.onDestroy()
     }
-
 
     fun speakOut(text: String) {
         tts!!.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
     }
-
-
 }

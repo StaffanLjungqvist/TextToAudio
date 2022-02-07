@@ -16,68 +16,36 @@
         android:layout_margin="16dp"
  />
 
+    <Button
+        android:id="@+id/btnSpeak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:text="Speak"
+        />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnSpeak"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:text="Speak"
-            />
 
         <Button
-            android:id="@+id/btnWriteAudio"
+            android:id="@+id/btnWriteToAudioFIle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Spara ljudfil"
-            android:layout_margin="8dp"
-            />
+            android:layout_margin="4dp"
+            android:text="skriv till fil"/>
 
         <Button
             android:id="@+id/btnReaduAudio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Spela"
-            android:layout_margin="8dp"
+            android:text="Spela fil"
+            android:layout_margin="4dp"
             />
 
     </LinearLayout>
 
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
-
-        <Button
-            android:id="@+id/btnWrite"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:text="Write"/>
-
-
-        <Button
-            android:id="@+id/btnRead"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="write"
-            android:layout_margin="16dp"
-            />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvInputText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Här ska text uppdateras"
-        android:layout_margin="16dp"
-        />
 
 </LinearLayout>
